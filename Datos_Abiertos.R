@@ -7,13 +7,14 @@ library(ggrepel)
 library(readxl)
 library(broom)
 library(lubridate)
+library(survminer)
 # download once
 file_download<-paste0("mx_", substr(Sys.time(), 1, 10), ".zip")
 download.file("http://187.191.75.115/gobmx/salud/datos_abiertos/datos_abiertos_covid19.zip", 
               destfile=file_download)
 unzip(zipfile = file_download)
 filename<-unzip(zipfile = file_download,list = T)$Name[1]
-dta<-fread(filename)
+dta<-fread(filename) %>% as_tibble
 # create broad age categories
 dta<-dta %>% mutate(age_cat=floor(EDAD/5)*5,
                     age_cat=ifelse(age_cat>=85, 85, age_cat),
@@ -128,22 +129,3 @@ age_adjusted %>% gather(outcome, value, -HABLA_LENGUA_INDIG) %>%
         legend.position = c(0.2, 0.8))
 
 
-
-# exploring a logistic model, with sequential adjustment
-glm(death~as.factor(HABLA_LENGUA_INDIG), data=dta %>% 
-      filter(RESULTADO==1, HABLA_LENGUA_INDIG!=99), family="binomial") %>% 
-  tidy
-glm(death~as.factor(HABLA_LENGUA_INDIG)+
-      as.factor(age_largecat), data=dta %>% 
-      filter(RESULTADO==1, HABLA_LENGUA_INDIG!=99), family="binomial") %>% 
-  tidy
-glm(death~as.factor(HABLA_LENGUA_INDIG)+
-      as.factor(age_largecat)+as.factor(SEXO), data=dta %>% 
-      filter(RESULTADO==1, HABLA_LENGUA_INDIG!=99), family="binomial") %>% 
-  tidy
-glm(death~as.factor(HABLA_LENGUA_INDIG)+
-      as.factor(age_largecat)+
-      as.factor(SEXO)+
-      as.factor(any_chronic), data=dta %>% 
-      filter(RESULTADO==1, HABLA_LENGUA_INDIG!=99), family="binomial") %>% 
-  tidy
